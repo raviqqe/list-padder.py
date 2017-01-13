@@ -1,4 +1,15 @@
 class ListPadder:
+    """
+    >>> ListPadder([4, None], 0).pad([[1, 2], [3, 4, 5]])
+    [[1, 2, 0, 0], [3, 4, 5, 0]]
+    >>> ListPadder([4, None], 0, centerize=True).pad([[1, 2], [3, 4, 5]])
+    [[0, 1, 2, 0], [3, 4, 5, 0]]
+    >>> ListPadder([4, 3, None], 0).pad([
+    ...     [[1, 2], [3, 4, 5]],
+    ...     [[6, 7, 8]]
+    ... ])
+    [[[1, 2, 0, 0], [3, 4, 5, 0], [0, 0, 0, 0]], [[6, 7, 8, 0], [0, 0, 0, 0], [0, 0, 0, 0]]]
+    """
 
     def __init__(self, lengths, bottom_dummy, centerize=False):
         self._lengths = {(level + 1): length
