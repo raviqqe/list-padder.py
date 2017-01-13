@@ -1,20 +1,19 @@
 class ListPadder:
 
-    def __init__(self, lengths, bottom_dummy, centerize):
-        assert all(isinstance(hier, int) and hier >
-                   0 for hier in lengths.keys())
-
-        self._lengths = lengths  # hier -> length
-        self._dummies = {0: bottom_dummy}  # hier -> dummy
+    def __init__(self, lengths, bottom_dummy, centerize=False):
+        self._lengths = {(level + 1): length
+                         for level, length in enumerate(lengths)}
+        self._dummies = {0: bottom_dummy}  # level -> dummy
         self._centerize = centerize
 
-    def _dummy(self, hier):
-        if hier in self._dummies:
-            return self._dummies[hier]
+    def _dummy(self, level):
+        if level in self._dummies:
+            return self._dummies[level]
 
-        assert hier != 0
-        self._dummies[hier] = [self._dummy(hier - 1)] * self._lengths[hier]
-        return self._dummies[hier]
+        assert level != 0
+
+        self._dummies[level] = [self._dummy(level - 1)] * self._lengths[level]
+        return self._dummies[level]
 
     def pad(self, list_):
         if not isinstance(list_, list):
@@ -22,30 +21,33 @@ class ListPadder:
 
         padded_sub_lists = [self.pad(sub_list) for sub_list in list_]
 
-        hier = self._hier(list_)
-        length = self._lengths[hier]
-
-        if length is None:
-            return padded_sub_lists
-
-        return self._pad_list_of_padded_sub_lists(padded_sub_lists)
+        return (padded_sub_lists
+                if self._lengths[self._level(list_)] is None else
+                self._pad_list_of_padded_sub_lists(padded_sub_lists))
 
     def _pad_list_of_padded_sub_lists(self, list_):
-        hier = self._hier(list_)
-        length = self._lengths[hier]
-        dummy_head, dummy_tail \
-            = self._split_in_half(self._dummy(hier)[:max(length - len(list_), 0)])
-        return dummy_head + list_[:length] + dummy_tail \
-            if self._centerize else \
-            list_[:length] + dummy_head + dummy_tail
+        level = self._level(list_)
+        length = self._lengths[level]
 
-    def _hier(self, list_):
+        dummy_head, dummy_tail = self._split_in_half(
+            self._dummy(level)[:max(length - len(list_), 0)])
+
+        return (dummy_head + list_[:length]
+                if self._centerize else
+                list_[:length] + dummy_head) + dummy_tail
+
+    def _level(self, list_):
         if not isinstance(list_, list):
             return 0
 
-        assert all(self._hier(elem) == self._hier(list_[0]) for elem in list_)
-        assert len(list_) > 0
-        return self._hier(list_[0]) + 1
+        if len(list_) == 0:
+            return 1
+
+        if not all(self._level(elem) == self._level(list_[0]) for elem in list_):
+            raise ValueError("Nest levels of sublists are balanced. {}"
+                             .format(list_))
+
+        return self._level(list_[0]) + 1
 
     @staticmethod
     def _split_in_half(list_):
