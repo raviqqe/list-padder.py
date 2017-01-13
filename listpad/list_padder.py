@@ -55,7 +55,7 @@ class ListPadder:
             return 1
 
         if not all(self._level(elem) == self._level(list_[0]) for elem in list_):
-            raise ValueError("Nest levels of sublists are balanced. {}"
+            raise ValueError("Nest levels of sublists are not balanced. {}"
                              .format(list_))
 
         return self._level(list_[0]) + 1
